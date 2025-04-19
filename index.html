@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Zoom & Pan Image</title>
+  <title>Zoom and Pan Image</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      background: black;
+      background-color: black;
+      height: 100%;
       overflow: hidden;
       touch-action: none;
     }
@@ -26,7 +27,8 @@
       left: 50%;
       transform: translate(-50%, -50%) scale(1);
       transform-origin: center center;
-      max-width: none;
+      max-width: 100%;
+      max-height: 100%;
       transition: transform 0.05s ease;
     }
   </style>
@@ -39,21 +41,19 @@
   <script>
     const img = document.getElementById('image');
     let scale = 1;
-    let lastScale = 1;
     let posX = 0;
     let posY = 0;
-    let lastX = 0;
-    let lastY = 0;
-    let isDragging = false;
     let startX = 0;
     let startY = 0;
+    let isDragging = false;
     let initialDistance = null;
+    let initialScale = 1;
 
     function updateTransform() {
       img.style.transform = `translate(calc(-50% + ${posX}px), calc(-50% + ${posY}px)) scale(${scale})`;
     }
 
-    // Mouse Zoom
+    // Mouse wheel zoom
     window.addEventListener('wheel', (e) => {
       e.preventDefault();
       const delta = e.deltaY < 0 ? 0.1 : -0.1;
@@ -61,7 +61,7 @@
       updateTransform();
     }, { passive: false });
 
-    // Mouse Drag
+    // Mouse drag
     window.addEventListener('mousedown', (e) => {
       if (scale === 1) return;
       isDragging = true;
@@ -80,15 +80,15 @@
       isDragging = false;
     });
 
-    // Touch Zoom and Drag
+    // Touch pinch and drag
     window.addEventListener('touchstart', (e) => {
       if (e.touches.length === 2) {
         initialDistance = getDistance(e.touches[0], e.touches[1]);
-        lastScale = scale;
+        initialScale = scale;
       } else if (e.touches.length === 1 && scale > 1) {
+        isDragging = true;
         startX = e.touches[0].clientX - posX;
         startY = e.touches[0].clientY - posY;
-        isDragging = true;
       }
     });
 
@@ -97,7 +97,7 @@
         e.preventDefault();
         const newDistance = getDistance(e.touches[0], e.touches[1]);
         const pinchScale = newDistance / initialDistance;
-        scale = Math.min(Math.max(1, lastScale * pinchScale), 5);
+        scale = Math.min(Math.max(1, initialScale * pinchScale), 5);
         updateTransform();
       } else if (e.touches.length === 1 && isDragging) {
         e.preventDefault();
@@ -107,16 +107,14 @@
       }
     }, { passive: false });
 
-    window.addEventListener('touchend', (e) => {
-      if (e.touches.length < 2) {
-        initialDistance = null;
-        isDragging = false;
-      }
+    window.addEventListener('touchend', () => {
+      initialDistance = null;
+      isDragging = false;
     });
 
-    function getDistance(touch1, touch2) {
-      const dx = touch2.clientX - touch1.clientX;
-      const dy = touch2.clientY - touch1.clientY;
+    function getDistance(t1, t2) {
+      const dx = t2.clientX - t1.clientX;
+      const dy = t2.clientY - t1.clientY;
       return Math.hypot(dx, dy);
     }
   </script>
